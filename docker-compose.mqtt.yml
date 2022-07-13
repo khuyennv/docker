@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+    vmq0:
+      image: vernemq/vernemq
+      environment:
+        DOCKER_VERNEMQ_SWARM: 1
+      networks:
+            - common
+    vmq:
+      image: vernemq/vernemq
+      depends_on:
+        - vmq0
+      environment:
+        DOCKER_VERNEMQ_SWARM: 1
+        DOCKER_VERNEMQ_DISCOVERY_NODE: vmq0
+      networks:
+            - common
+      deploy:
+        replicas: 2
+
+networks:
+    common:

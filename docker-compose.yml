@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+    redis:
+        container_name: redis
+        image: redis:alpine
+        volumes:
+            - ./data/redis:/data
+            - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+        ports:
+            - "6379:6379"
+        networks:
+            - common
+        restart: always
+
+    # nginx:
+    #   image: nginx:1.15-alpine
+    #   ports:
+    #     - 80:80
+    #     - 443:443
+    #   volumes:
+    #     - ./data/nginx/snippets:/etc/nginx/snippets
+    #     - ./data/nginx/conf.d:/etc/nginx/conf.d
+    #     - ./data/nginx/html:/var/www/html
+    #     - ./data/nginx/certs:/etc/nginx/certs
+    #   networks:
+    #     - common
+    #   restart: always
+
+    rabbitmq:
+        container_name: rabbitmq
+        image: rabbitmq:3.7.2-management
+        environment:
+            - RABBITMQ_DEFAULT_USER=zeta_queue
+            - RABBITMQ_DEFAULT_PASS=zeta_queue
+        ports:
+            - "15672:15672"
+            - "5672:5672"
+        networks:
+            - common
+        restart: always
+
+    # elasticsearch:
+    #     container_name: elasticsearch
+    #     image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    #     environment:
+    #         - node.name=elasticsearch
+    #         - cluster.name=docker-cluster
+    #         - cluster.initial_master_nodes=elasticsearch
+    #         - "ES_JAVA_OPTS=-Xms256M -Xmx256M"
+    #     volumes:
+    #         - ./data/elastic:/usr/share/elasticsearch/data
+    #     ports:
+    #         - 9200:9200
+    #         - 9300:9300
+    #     networks:
+    #         - common
+    #     restart: always
+
+    # mosquitto:
+    #     container_name: mosquitto
+    #     image: eclipse-mosquitto:latest
+    #     # restart: unless-stopped
+    #     restart: always
+    #     expose:
+    #       - 1883
+    #       - 9001
+    #     ports:
+    #       - 1883:1883
+    #       - 9001:9001
+    #     volumes:
+    #       - ./data/mosquitto/config/:/mosquitto/config
+    #       - ./data/mosquitto/data:/mosquitto/data
+    #       - ./data/mosquitto/log:/mosquitto/log
+    #     networks:
+    #         - common
+
+    mysql:
+        container_name: mysql
+        image: mysql:8.0.27
+
+        volumes:
+            - ./data/mysql:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: api
+            MYSQL_DATABASE: main
+            MYSQL_USER: api
+            MYSQL_PASSWORD: api
+            TZ: Asia/Ho_Chi_Minh
+        ports:
+            - 3306:3306
+        networks:
+            - common
+        restart: always
+
+    phpmyadmin:
+        container_name: phpmyadmin
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - '8888:80'
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=mysql
+        depends_on:
+            - mysql
+        networks:
+            - common
+        restart: always
+    wordpress:
+      depends_on:
+        - mysql
+      image: wordpress:5.9.3-php7.4
+      volumes:
+        - /Volumes/Data/www/qt/html:/var/www/html
+        - ./data/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      ports:
+        - "9001:80"
+      restart: always
+      networks:
+        - common
+      environment:
+        WORDPRESS_DB_HOST: mysql
+        WORDPRESS_DB_USER: root
+        WORDPRESS_DB_PASSWORD: api
+        WORDPRESS_DB_NAME: main
+volumes:
+  db_data: {}
+  wordpress_data: {}
+
+networks:
+    common:
